@@ -1,0 +1,106 @@
+1️⃣ Architecture Overview
+Browser
+   │
+   ▼
+Application Load Balancer (ALB)
+   │
+   ├── EC2 #1 → Node.js/Express backend
+   ├── EC2 #2 → Node.js/Express backend
+   ▼
+Frontend EC2 (React build served by Nginx)
+   │
+   ▼
+Optional: MongoDB (Atlas or EC2-hosted)
+
+2️⃣ Backend Setup (Node.js/Express)
+
+Create backend project:
+
+mkdir aws-backend && cd aws-backend
+npm init -y
+npm install express cors
+
+
+Example server.js:
+
+const express = require("express");
+const app = express();
+
+app.get("/", (req, res) => res.send("Backend working!"));
+app.listen(8080, () => console.log("Server running on port 8080"));
+
+
+Create production build for EC2:
+
+Zip the project and upload via AWS Console or deploy through GitHub.
+
+On each EC2 instance:
+
+sudo yum update -y
+sudo yum install -y nodejs git
+git clone <your-repo>
+cd aws-backend
+npm install
+node server.js
+
+
+Ensure the backend runs on port 8080.
+
+3️⃣ Frontend Setup (React)
+
+Build the React app locally:
+
+npm run build
+
+
+Copy the build/ folder to another EC2 instance running Nginx:
+
+sudo yum install -y nginx
+sudo rm -rf /usr/share/nginx/html/*
+sudo cp -r build/* /usr/share/nginx/html/
+sudo systemctl enable nginx
+sudo systemctl start nginx
+
+
+Visit http://<frontend-ec2-public-ip> to verify your React app is served.
+
+4️⃣ Configure the Application Load Balancer (ALB)
+
+Open EC2 → Load Balancers → Create Load Balancer → Application Load Balancer
+
+Scheme: Internet-facing
+
+Listeners: HTTP : 80
+
+Create a Target Group:
+
+Target type: Instance
+
+Port: 8080
+
+Register both backend EC2 instances.
+
+Add Targets to the ALB and confirm health checks pass.
+
+Test: Visit the ALB’s DNS name (e.g., http://myapp-alb-1234.elb.amazonaws.com)
+
+You should see your backend response.
+
+Try stopping one backend instance—traffic should continue through the other.
+
+5️⃣ Security Group Configuration
+Component	Inbound Rules	Outbound Rules
+Frontend EC2	Allow HTTP (80) from anywhere	Allow all
+Backend EC2s	Allow HTTP (8080) from ALB SG	Allow all
+ALB	Allow HTTP (80) from anywhere	Allow all
+6️⃣ (Optionally) Add a Custom Domain
+
+In Route 53, create a hosted zone and an A record (Alias) pointing to the ALB’s DNS name.
+
+Access your app via https://yourdomain.com.
+
+7️⃣ Verification
+
+✅ Access your React frontend → it should call the backend through the ALB endpoint.
+✅ Stop one backend instance → traffic should still flow via the remaining one.
+✅ ALB health checks show instance status (healthy/unhealthy).
