@@ -1,0 +1,116 @@
+1️⃣ Project Setup
+
+You should already have your app (React or Node.js project) in a GitHub repository.
+Make sure your project contains a valid package.json with test and build scripts:
+
+{
+  "scripts": {
+    "test": "react-scripts test --watchAll=false",
+    "build": "react-scripts build"
+  }
+}
+
+2️⃣ Create GitHub Actions Workflow
+
+Inside your project, create the following folder structure:
+
+.github/
+└── workflows/
+    └── main.yml
+
+3️⃣ main.yml Configuration
+
+Here’s a sample GitHub Actions workflow file for CI/CD:
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # Step 4: Run tests
+      - name: Run tests
+        run: npm test
+
+      # Step 5: Build the project
+      - name: Build project
+        run: npm run build
+
+  # Optional deployment job (example for GitHub Pages)
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: success()
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+
+4️⃣ How It Works
+
+✅ Trigger:
+Runs automatically on every push to the main branch.
+
+✅ Pipeline steps:
+
+Checks out your code.
+
+Sets up Node.js 18 environment.
+
+Installs dependencies (npm ci).
+
+Runs automated tests (npm test).
+
+Builds your app (npm run build).
+
+(Optional) Deploys build output to GitHub Pages.
+
+5️⃣ Verify Results
+
+After pushing this workflow to your repo:
+
+Go to the “Actions” tab on GitHub.
+
+You’ll see your CI/CD pipeline running automatically.
+
+Green check ✅ = successful test and build.
+
+Deployment will automatically publish your site (if configured).
+
+6️⃣ Expected Output
+
+✅ A working CI/CD pipeline that:
+
+Runs on each push to main
+
+Installs, tests, and builds automatically
+
+Optionally deploys your app (e.g., to GitHub Pages or AWS S3)
+
+Shows workflow status clearly in the Actions tab
